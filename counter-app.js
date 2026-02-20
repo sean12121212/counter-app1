@@ -1,79 +1,224 @@
 /**
  * Copyright 2026 
- * @license Apache-2.0, see LICENSE for full text.
+ * @license Apache-2.0
  */
 import { LitElement, html, css } from "lit";
 import { DDDSuper } from "@haxtheweb/d-d-d/d-d-d.js";
 import { I18NMixin } from "@haxtheweb/i18n-manager/lib/I18NMixin.js";
 
-/**
- * `counter-app`
- * 
- * @demo index.html
- * @element counter-app
- */
+
 export class CounterApp extends DDDSuper(I18NMixin(LitElement)) {
 
+  /**
+   * Defines the custom element tag name
+   */
   static get tag() {
     return "counter-app";
   }
 
+  /**
+   * Constructor sets default values
+   */
   constructor() {
     super();
-    this.title = "";
-    this.t = this.t || {};
-    this.t = {
-      ...this.t,
-      title: "Title",
-    };
-    this.registerLocalization({
-      context: this,
-      localesPath:
-        new URL("./locales/counter-app.ar.json", import.meta.url).href +
-        "/../",
-    });
-  }
-
-  // Lit reactive properties
-  static get properties() {
-    return {
-      ...super.properties,
-      title: { type: String },
-    };
-  }
-
-  // Lit scoped styles
-  static get styles() {
-    return [super.styles,
-    css`
-      :host {
-        display: block;
-        color: var(--ddd-theme-primary);
-        background-color: var(--ddd-theme-default-beaverBlue);
-        font-family: var(--ddd-font-navigation);
-      }
-      .wrapper {
-        margin: var(--ddd-spacing-2);
-        padding: var(--ddd-spacing-4);
-      }
-      h3 span {
-        font-size: var(--counter-app-label-font-size, var(--ddd-font-size-s));
-      }
-    `];
-  }
-
-  // Lit render the HTML
-  render() {
-    return html`
-<div class="wrapper">
-  <h3><span>${this.t.title}:</span> ${this.title}</h3>
-  <slot></slot>
-</div>`;
+    this.counter = 0;
+    this.min = 0;
+    this.max = 30;
   }
 
   /**
-   * haxProperties integration via file reference
+   * Reactive properties
    */
+  static get properties() {
+    return {
+      ...super.properties,
+      counter: { type: Number, reflect: true },
+      min: { type: Number },
+      max: { type: Number }
+    };
+  }
+
+ // Logic 
+
+  /**
+   * Increases the counter by 1
+   * Only runs if counter is less than max
+   */
+  increment() {
+    if (this.counter < this.max) {
+      this.counter++;
+    }
+  }
+
+  /**
+   * Decreases the counter by 1
+   * Only runs if counter is greater than min
+   */
+  decrement() {
+    if (this.counter > this.min) {
+      this.counter--;
+    }
+  }
+
+  /**
+   * Lifecycle method that runs after updates occur
+   */
+  updated(changedProperties) {
+    if (super.updated) {
+      super.updated(changedProperties);
+    }
+
+    if (changedProperties.has("counter")) {
+      if (this.counter === 21) {
+        this.makeItRain();
+      }
+    }
+  }
+
+  /**
+   * imports the confetti-container
+   */
+  makeItRain() {
+    import("@haxtheweb/multiple-choice/lib/confetti-container.js").then(
+      () => {
+        setTimeout(() => {
+          this.shadowRoot
+            .querySelector("#confetti")
+            .setAttribute("popped", "");
+        }, 0);
+      }
+    );
+  }
+
+  /**
+   * Determines which CSS class to apply based on the current counter number.
+   */
+  getNumberClass() {
+    if (this.counter === this.min || this.counter === this.max) {
+      return "boundary";
+    }
+    if (this.counter === 18) {
+      return "eighteen";
+    }
+    if (this.counter === 21) {
+      return "twentyone";
+    }
+    return "default";
+  }
+
+  
+  /**
+   * Styles
+   * Scoped CSS
+   * DDD desgign stysem 
+   * Layout and spacing
+   * Controls button states
+   * Colors for the numbers which change if certain numbers are reached 
+   */
+  static get styles() {
+    return [
+      super.styles,
+      css`
+        :host {
+          display: block;
+          text-align: center;
+          padding: var(--ddd-spacing-4);
+        }
+
+        .number {
+          font-size: var(--ddd-font-size-4xl);
+          font-weight: var(--ddd-font-weight-bold);
+          margin-bottom: var(--ddd-spacing-4);
+          transition: color 0.2s ease-in-out;
+        }
+
+        .buttons {
+          display: flex;
+          justify-content: center;
+          gap: var(--ddd-spacing-3);
+        }
+
+        button {
+          font-size: var(--ddd-font-size-l);
+          padding: var(--ddd-spacing-2) var(--ddd-spacing-4);
+          border-radius: var(--ddd-radius-md);
+          border: var(--ddd-border-sm);
+          background-color: var(--ddd-theme-default-beaverBlue);
+          color: white;
+          cursor: pointer;
+          transition: background-color 0.2s ease-in-out,
+                      transform 0.1s ease-in-out;
+        }
+
+        button:hover,
+        button:focus {
+          background-color: var(--ddd-theme-default-nittanyNavy);
+          transform: translateY(-2px);
+          outline: var(--ddd-border-md);
+        }
+
+        button:disabled {
+          background-color: var(--ddd-theme-default-navy40);
+          cursor: not-allowed;
+          opacity: 0.6;
+          transform: none;
+        }
+
+        .default {
+          color: var(--ddd-theme-default-keystoneYellow);
+        }
+
+        .eighteen {
+          color: var(--ddd-theme-default-original87Pink);
+        }
+
+        .twentyone {
+          color: var(--ddd-theme-default-futureLime);
+        }
+
+        .boundary {
+          color: var(--ddd-theme-default-landgrantBrown);
+        }
+      `
+    ];
+  }
+
+  
+  /**
+   * Render
+   * adds the structure for confetti for wrapping the entire component
+   * COntains the large number display
+   * Contains the '+' and '-' buttons
+   */  
+
+  render() {
+    return html`
+      <confetti-container id="confetti">
+        <div class="number ${this.getNumberClass()}">
+          ${this.counter}
+        </div>
+
+        <div class="buttons">
+          <button
+            @click="${this.decrement}"
+            ?disabled="${this.counter === this.min}"
+          >
+            -
+          </button>
+
+          <button
+            @click="${this.increment}"
+            ?disabled="${this.counter === this.max}"
+          >
+            +
+          </button>
+        </div>
+      </confetti-container>
+    `;
+  }
+
+  // HAX integration 
+   
   static get haxProperties() {
     return new URL(`./lib/${this.tag}.haxProperties.json`, import.meta.url)
       .href;
